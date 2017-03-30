@@ -1,0 +1,37 @@
+{
+    "name": "report",
+    "version": "1.0.0",
+    "description": "Table with extended functionality for working with data",
+    "main": "report.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "keywords": [
+        "report",
+        "angular"
+    ],
+    "author": "Roman Hamretskyi",
+    "license": "ISC",
+    "devDependencies": {
+        "browser-sync": "^2.18.5",
+        "gulp": "^3.9.1",
+        "del": "^2.2.2",
+        "gulp-autoprefixer": "^2.3.1",
+        "gulp-csso": "^2.0.0",
+        "gulp-if": "^2.0.2",
+        "gulp-imagemin": "^2.4.0",
+        "gulp-minify-css": "^1.2.4",
+        "gulp-rigger": "^0.5.8",
+        "gulp-sass": "^1.3.3",
+        "gulp-server-livereload": "^1.9.2",
+        "gulp-sourcemaps": "^1.9.1",
+        "gulp-uglify": "^1.5.4",
+        "gulp-watch": "^4.3.11",
+        "imagemin-pngquant": "^4.2.2",
+        "node-sass": "^4.1.1",
+        "rimraf": "^2.5.4"
+    },
+    "dependencies": {
+        "gulp": "^3.9.1"
+    }
+}
