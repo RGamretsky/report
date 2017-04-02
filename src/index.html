@@ -1,19 +1,26 @@
 <html>
 
 <head>
+    <link rel="stylesheet" href="/libs/bootstrap/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="report/css/report.css">
+    <link rel="stylesheet" href="report/css/ReportPanelAndPagination.css">
+    <link rel="stylesheet" href="report/css/reportStyle.css">
+    <link rel="stylesheet" href="/libs/angular-ui-select/dist/select.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/3.4.5/select2.css">    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/selectize.js/0.8.5/css/selectize.default.css">
     <script type="text/javascript" src="/libs/angular/angular.min.js"></script>
     <script type="text/javascript" src="/libs/lodash/dist/lodash.min.js"></script>
     <script type="text/javascript" src="/libs/angular-bind-html-compile/angular-bind-html-compile.min.js"></script>
     <script type="text/javascript" src="/libs/angular-sanitize/angular-sanitize.min.js"></script>
     <script type="text/javascript" src="/libs/angularjs-dropdown-multiselect/dist/angularjs-dropdown-multiselect.min.js"></script>
     <script type="text/javascript" src="/libs/angularUtils-pagination/dirPagination.js"></script>
+    <script type="text/javascript" src="/libs/angular-ui-select/dist/select.min.js"></script>
     <script type="text/javascript " src="/report/js/report.js "></script>
     <script type="text/javascript " src="/example/app.js "></script>
 </head>
 
 <body ng-app="MainApp" ng-controller="MainCtrl">
-    Test
-    <report-table rows="rows" headers="headers" pagination-id="1"></report-table>
+    <report-table rows="rows" global-search tags-search total headers="headers" pagination-id="1"></report-table>
 </body>
 
 </html>

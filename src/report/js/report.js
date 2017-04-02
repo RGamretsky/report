@@ -2,10 +2,11 @@
     'angularUtils.directives.dirPagination',
     'angularjs-dropdown-multiselect',
     'ngSanitize',
-    'angular-bind-html-compile'
+    'angular-bind-html-compile',
+    'ui.select'
 ]);
 
-app.controller('PaginationController', function($rootScope) {});
+app.controller('PaginationController', function() {});
 
 function unique() {
     var a = [];
@@ -25,7 +26,7 @@ app.filter("trustSafe", ['$sce', function($sce) {
     return function(htmlCode) {
         return $sce.trustAsHtml("" + htmlCode);
     }
-}])
+}]);
 
 app.filter('search', function($filter) {
     return function(input, search, multipleSearch) {
@@ -44,10 +45,10 @@ app.filter('search', function($filter) {
             var searchArray = multipleSearch.split(';');
             angular.forEach(searchArray, function(v, k) {
 
-                if (v != '') {
+                if (v !== '') {
                     angular.forEach(input, function(value) {
                         angular.forEach(value, function(prop, key) {
-                            if (prop && prop.toLowerCase().indexOf(v.toLowerCase()) > -1) {
+                            if (prop && prop.toString().toLowerCase().indexOf(v.toLowerCase()) > -1) {
                                 tmp.push(value);
                             }
                         });
@@ -63,7 +64,43 @@ app.filter('search', function($filter) {
         }
         data = $filter('filter')(data, search);
 
+        return isEmpty ? input : data;
+    }
+});
 
+app.filter('tagsSearch', function($filter) {
+    return function(input, search) {      
+        var isEmpty = true;
+        angular.forEach(search, function(value, key) {
+            if (value.length > 0) {
+                isEmpty = false;
+            }
+        });
+        var data = [];
+
+        var tmp = [];
+
+        angular.forEach(search, function(arr, k) {
+            angular.forEach(arr, function(v){
+                if (v && v !== '') {
+                    angular.forEach(input, function(value, index) {
+                        angular.forEach(value, function(prop, key) {
+                            if (prop && k == key && prop.toString().toLowerCase().indexOf(v.toLowerCase()) > -1) {
+                                tmp.push(value);
+                            }
+                        });
+                    });
+                }
+                input = tmp;
+                tmp = [];
+            });
+        });
+
+        if (input) {
+            data = unique.apply(input);
+        }
+
+        console.log(isEmpty, input);
         return isEmpty ? input : data;
     }
 });
@@ -77,12 +114,16 @@ app.filter('orderByHtml', function() {
     }
 });
 
-app.directive('reportTable', function($filter, $http) {
+app.directive('reportTable', function($filter, $http, $location) {
     'use strict';
     return {
         restrict: "E",
         replace: false,
-        template: '<div class="my-controller" class="controller" ng-class="addLoadingClass()"> <div class="panel-body"> <div ng-if="titleOption" class="ms-webpart-chrome-title"> <span class="js-webpart-titleCell"> <h2 style="text-align:justify;" class="ms-webpart-titleText"> <nobr> <span>{{reportName}}</span> </nobr> </h2> </span> </div><div> <div ng-if="selectOption" class="select-col"> <div class="button-fix"> <div ng-dropdown-multiselect="" options="selectData" selected-model="checkedCol" extra-settings="selectSettings" translation-texts="selectTexts"></div></div></div><div ng-if="searchOption && checkedCol.length" class="search-box"> <span class="fa fa-search"></span> <input ng-change="searchSelector(search)" ng-model="search" id="search" class="form-control"> </div><div ng-if="checkedCol.length" class="pdf-exel"> <div ng-if="printExcelOption" class="newButton pdf-excel-btn" id="btnExport" ng-click="SaveToExcel(tableData, headers, reportName)"><i class="fa fa-file-excel-o" aria-hidden="true"></i></div><div ng-if="printPdfOption" class="newButton pdf-excel-btn" id="submit" ng-click="SaveToPdf(tableData, headers,{text:reportName, x:550, y:40}, reportName)"><i class="fa fa-file-pdf-o" aria-hidden="true"></i></div></div></div><table class="Table" ng-if="checkedCol.length"> <thead> <tr class="table-row-header"> <th class="table-cell header" ng-if="removeOption"><span class="table-title">Remove</span></th> <th ng-if="!selectOption || getDisplay($index)" class="table-cell header" ng-repeat="item in headers"> <a class="pull-right" href="#" ng-click="setOrderBy($index)"> <span class="table-title">{{item}}</span> <span ng-if="tableData.length > 1" class="glyphicon orderTitle" ng-class="setClassByOrder($index)"></span> </a> </th> </tr><tr ng-if="rows.length !=0 && searchOption" class="table-row-search header"> <th class="table-cell" ng-if="removeOption"></th> <th ng-if="!selectOption || getDisplay($index)" class="table-cell" ng-repeat="col in headers"> <div class="search" ng-hide="isHideSearch($index)"> <input class="input-field" type="text" ng-model="searchString[$index]"> </div></th> </tr></thead> <tbody> <tr class="table-row" dir-paginate="item in tableData| itemsPerPage: 10" current-page="currentPage" pagination-id="paginationId" "> <td ng-if="removeOption " ng-click="removeRow(item) " class="table-cell table-cell- "><i class="fa fa-remove "></i></td><td ng-click="change("/editcontract/10")" ng-class="{"formatted": getValueType(value) == "currency" || getValueType(value) == "number"}" ng-if=" (!selectOption || getDisplay($index)) && value !== item.metadata " class="table - cell table - cell - " ng-repeat="value in item track by $index " bind-html-compile="convertDate(value)"></td></tr></tbody> </table> <span class="empty - result - fix " ng-if="rows.length == 0 ">We didnt find anything to show here</span> <span class="empty - result - fix " ng-if="errorOption ">Error</span> <div ng-controller="PaginationController" ng-if="checkedCol.length "> <div class="text - center "> <div class="SW - total total " ng-if="totalOption ">Total:{{tableData.length}}</div><dir-pagination-controls boundary-links="true " pagination-id="paginationId " on-page-change="pageChangeHandler(newPageNumber) "template-url="/libs/angularUtils - pagination / dirPagination.tpl.html "></dir-pagination-controls> </div></div></div><iframe id="txtArea1 " style="display: none "></iframe></div>',
+        //templateUrl: '/report/templates/report.html',
+        template: '<div class="my-controller" class="controller" ng-class="addLoadingClass()"> <div class="panel-body"> <div ng-if="titleOption" class="ms-webpart-chrome-title"> <span class="js-webpart-titleCell"> <h2 style="text-align:justify;" class="ms-webpart-titleText"> <nobr> <span>{{reportName}}</span> </nobr> </h2> </span> </div><div> <div ng-if="selectOption" class="select-col"> <div class="button-fix"> <div ng-dropdown-multiselect="" options="selectData" selected-model="checkedCol" extra-settings="selectSettings" translation-texts="selectTexts"></div></div></div><div ng-if="globalSearch && checkedCol.length" class="search-box"> <span class="fa fa-search"></span> <input ng-change="searchSelector(search)" ng-model="search" id="search" class="form-control"> </div><div ng-if="checkedCol.length" class="pdf-exel"> <div ng-if="printExcelOption" class="newButton pdf-excel-btn" id="btnExport" ng-click="SaveToExcel(tableData, headers, reportName)"><i class="fa fa-file-excel-o" aria-hidden="true"></i></div><div ng-if="printPdfOption" class="newButton pdf-excel-btn" id="submit" ng-click="SaveToPdf(tableData, headers,{text:reportName, x:550, y:40}, reportName)"><i class="fa fa-file-pdf-o" aria-hidden="true"></i></div></div></div><div> <table class="Table" ng-if="checkedCol.length"> <thead> <tr class="table-row-header"> <th ng-if="!selectOption || getDisplay($index)" class="table-cell header" ng-repeat="item in headers"> <a class="pull-right" href="#" ng-click="setOrderBy($index)"> <span class="table-title">{{item}}</span> <span ng-if="tableData.length > 1" class="glyphicon orderTitle" ng-class="setClassByOrder($index)"></span> </a> </th> </tr><tr ng-if="rows.length !=0 && (searchOption || tagsSearchAttr)" class="table-row-search header"> <th ng-if="!selectOption || getDisplay($index)" class="table-cell" ng-repeat="col in headers"> <div ng-if="searchOption" class="search" ng-hide="isHideSearch($index)"> <input class="input-field" type="text" ng-model="searchString[$index]"> </div><div ng-if="tagsSearchAttr"> <ui-select multiple tagging tagging-label="false" ng-model="tagsSearch.selectedItems[$index]" theme="bootstrap"> <ui-select-match>{{$item}}</ui-select-match> <ui-select-choices repeat="val in toArray($index) | filter:$select.search track by $index"> <div ng-bind-html="val | highlight: $select.search"></div></ui-select-choices> </ui-select> </div></th> </tr></thead> <tbody> <tr class="table-row" dir-paginate="item in tableData| itemsPerPage: 10" current-page="currentPage" pagination-id="paginationId"> <td ng-if="removeOption " ng-click="removeRow(item)" class="table-cell table-cell- "><i class="fa fa-remove "></i></td><td ng-class="{\'formatted\' : getValueType(value)==\'currency\' || getValueType(value)==\'number\'}" ng-if="(!selectOption || getDisplay($index)) && value !==item.metadata" class="table-cell table-cell- " ng-repeat="value in item track by $index " bind-html-compile="convertDate(value)"></td></tr></tbody> </table> <span class="empty-result-fix " ng-if="rows.length==0">We didn\'t find anything to show here</span> <span class="empty-result-fix " ng-if="errorOption ">Error</span> <div ng-controller="PaginationController" ng-if="checkedCol.length "> <div class="text-center"> <div class="SW-total total" ng-if="totalOption">Total:{{tableData.length}}</div><dir-pagination-controls boundary-links="true" pagination-id="paginationId " on-page-change="pageChangeHandler(newPageNumber) "></dir-pagination-controls> </div></div></div><iframe id="txtArea1 " style="display:none"></iframe></div>',
+        /*
+        template: '<div class="my-controller" class="controller" ng-class="addLoadingClass()"> <div class="panel-body"> <div ng-if="titleOption" class="ms-webpart-chrome-title"> <span class="js-webpart-titleCell"> <h2 style="text-align:justify;" class="ms-webpart-titleText"> <nobr> <span>{{reportName}}</span> </nobr> </h2> </span> </div><div class="report-panel"> <div ng-if="selectOption" class="select-col"> <div class="button-fix"> <div ng-dropdown-multiselect="" options="selectData" selected-model="checkedCol" extra-settings="selectSettings" translation-texts="selectTexts"></div></div></div><div ng-if="searchOption && checkedCol.length" class="search-box"> <span class="fa fa-search"></span> <input ng-change="searchSelector(search)" ng-model="search" id="search" class="form-control"> </div><div ng-if="checkedCol.length" class="pdf-exel"> <div ng-if="printExcelOption" class="newButton pdf-excel-btn" id="btnExport" ng-click="SaveToExcel(tableData, headers, reportName)"><i class="fa fa-file-excel-o" aria-hidden="true"></i></div><div ng-if="printPdfOption" class="newButton pdf-excel-btn" id="submit" ng-click="SaveToPdf(tableData, headers,{text:reportName, x:550, y:40}, reportName)"><i class="fa fa-file-pdf-o" aria-hidden="true"></i></div></div></div><table class="Table" ng-if="checkedCol.length"> <thead> <tr class="table-row-header"> <th class="table-cell header" ng-if="removeOption"><span class="table-title">Remove</span></th> <th ng-if="!selectOption || getDisplay($index)" class="table-cell header" ng-repeat="item in headers"> <a class="pull-right" ng-click="setOrderBy($index)"> <span class="table-title">{{item}}</span> <span ng-if="tableData.length > 1" class="glyphicon orderTitle" ng-class="setClassByOrder($index)"></span> </a> </th> </tr><tr ng-if="rows.length !=0 && searchOption" class="table-row-search header"> <th class="table-cell" ng-if="removeOption"></th> <th ng-if="!selectOption || getDisplay($index)" class="table-cell" ng-repeat="col in headers"> <div class="search" ng-hide="isHideSearch($index)"> <input class="input-field" type="text" ng-model="searchString[$index]"> </div></th> </tr></thead> <tbody> <tr ng-click="changePath(item)" class="table-row" dir-paginate="item in tableData| itemsPerPage: 10" current-page="currentPage" pagination-id="paginationId" "> <td ng-if="removeOption" ng-click="removeRow(item)" class="table-cell"><i class="fa fa-remove"></i></td><td ng-class="{\'formatted\': getValueType(value) == \'currency\' || getValueType(value) == \'number\'}" ng-if="(!selectOption || getDisplay($index)) && value !== item.metadata " class="table-cell" ng-repeat="value in item track by $index " bind-html-compile="convertDate(value)"></td></tr></tbody> </table> <span class="empty-result-fix " ng-if="rows.length == 0 ">We didnt find anything to show here</span> <span class="empty-result-fix " ng-if="errorOption">Error</span> <div ng-controller="PaginationController" ng-if="checkedCol.length"> <div class="text-center"> <div class="SW-total total " ng-if="totalOption ">Total:{{tableData.length}}</div><dir-pagination-controls boundary-links="true " pagination-id="paginationId " on-page-change="pageChangeHandler(newPageNumber)"></dir-pagination-controls> </div></div></div><iframe id="txtArea1" style="display: none "></iframe></div>',
+        */
         scope: {
             headers: "=headers",
             loading: "=loading",
@@ -96,9 +137,10 @@ app.directive('reportTable', function($filter, $http) {
             errorOption: "=error",
             hidenSearch: "=?hidenSearch",
             sendEmail: "=?sendEmail",
-            editModal: "=?editModal"
+            editModal: "=?editModal",
+            path: "=?path"
         },
-        controller: function($scope) {
+        controller: function($scope, $location) {
             $scope.selectSettings = {
                 scrollableHeight: '300px',
                 scrollable: true,
@@ -107,9 +149,28 @@ app.directive('reportTable', function($filter, $http) {
             $scope.selectTexts = {
                 buttonDefaultText: 'Columns'
             };
+
+            $scope.changePath = function(item) {
+                if ($scope.path) {
+                    $location.path($scope.path + "/" + item["0"]);
+                }
+            };
         },
-        link: function($scope, attr, $rootScope) {
-            console.log('work');
+        link: function($scope, attr, $rootScope, $location) {
+            $scope.tagsSearch = { selectedItems : []};
+            
+            $scope.$watch('tagsSearch.selectedItems', function(){
+                $scope.tableData = $filter('tagsSearch')($scope.rows, $scope.tagsSearch.selectedItems);
+            }, true);
+
+            $scope.toArray = function(index){
+                var array = [];
+                angular.forEach(angular.copy($scope.tableData), function(value){
+                    array.push(value[index]);
+                });
+                return unique.apply(array);
+            };
+            //$scope.selected = { item: $scope.head[0] };
             /////////////////////////////////////////////////////////////////////////////////////////////////
             $scope.widthFix = function() {
                 //console.log(document.getElementById("contentRow").offsetWidth);
@@ -119,6 +180,7 @@ app.directive('reportTable', function($filter, $http) {
             $scope.editModal = $scope.editModal;
             $scope.convertDate = convertDate;
             if (attr[0].attributes["search"]) $scope.searchOption = true;
+            if (attr[0].attributes["global-search"]) $scope.globalSearch = true;
             if (attr[0].attributes["total"]) $scope.totalOption = true;
             if (attr[0].attributes["fixed"]) $scope.fixedOption = true;
             if (attr[0].attributes["print-excel"]) $scope.printExcelOption = true;
@@ -126,6 +188,7 @@ app.directive('reportTable', function($filter, $http) {
             if (attr[0].attributes["title"]) $scope.titleOption = true;
             if (attr[0].attributes["select"]) $scope.selectOption = true;
             if (attr[0].attributes["remove"]) $scope.removeOption = true;
+            if (attr[0].attributes["tags-search"]) $scope.tagsSearchAttr = true;
             $scope.setClassByOrder = function(index) {
                 if ($scope.orderBy == (index.toString())) return "glyphicon-triangle-top arrov-fix";
                 else if ($scope.orderBy == ((-index).toString())) return "glyphicon-triangle-bottom arrov-fix";
@@ -158,7 +221,7 @@ app.directive('reportTable', function($filter, $http) {
                     if (item == $scope.checkedCol[i].id) return true;
                 }
                 return false;
-            }
+            };
 
             $scope.setOrderBy = function(index) {
                 if ($scope.orderBy == index.toString()) {
@@ -166,7 +229,7 @@ app.directive('reportTable', function($filter, $http) {
                 } else {
                     $scope.orderBy = index.toString();
                 }
-            }
+            };
 
             var searchString = function() {
                 $scope.tableData = $filter('search')($scope.rows, $scope.searchString, $scope.search);
@@ -182,11 +245,11 @@ app.directive('reportTable', function($filter, $http) {
                 if ($scope.orderBy.indexOf("-") > -1) propertyName = $scope.orderBy.substring(1);
                 if (!isNaN(Date.parse(row[propertyName]))) return new Date(row[propertyName]);
                 return row[propertyName];
-            }
+            };
 
             var orderBy = function() {
                 $scope.tableData = $filter('orderBy')($scope.tableData, predicate, $scope.orderBy.indexOf("-") > -1);
-            }
+            };
 
             $scope.remakeTable = function() {
                 searchString();
@@ -225,10 +288,9 @@ app.directive('reportTable', function($filter, $http) {
             $scope.$watch('orderBy', orderBy, true);
             $scope.$watch('rows', function() {
                 $scope.tableData = $scope.rows;
-
-
                 $scope.remakeTable();
             }, true);
+
             $scope.$watch('search', searchString, true);
 
             var dt = new Date();
@@ -236,28 +298,6 @@ app.directive('reportTable', function($filter, $http) {
             var month = dt.toString().split(' ')[1];
             var year = dt.getFullYear();
             var postfix = " as of " + month + "-" + day + "-" + year;
-
-            $scope.SaveToExcel = function(tableData, headerData, title) {
-
-                var rows = [];
-                angular.forEach(angular.copy(tableData), function(v, k) {
-                    var row = [];
-                    angular.forEach(v, function(item, key) {
-                        if (key != "metadata")
-                            row.push(item);
-                    });
-                    rows.push(row);
-                });
-
-                var table = {
-                    header: angular.copy(headerData),
-                    rows: angular.copy(rows),
-                    title: angular.copy(title) + postfix
-                };
-                $http.post('/_vti_bin/ReportsService.svc/ExportToExcel', table).then(function(d) {
-                    window.open("/_vti_bin/ReportsService.svc/GetExcelFile/" + d.data);
-                });
-            }
 
             $scope.SaveToPdf = function(tableData, headerData, title, pdfName) {
 
